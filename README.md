@@ -65,12 +65,17 @@ Example below.
 
 ## Ziel
 
+Dieses Projekt zeigt, wie sich häufige Sicherheitskonfigurationsfehler bei S3-Buckets und im umgebenden AWS-Umfeld erkennen und anschließend mit Terraform reproduzierbar beheben lassen. Der Ansatz folgt einer Vorher-Nachher-Logik: Zunächst wird eine unsichere Konfiguration bereitgestellt, die dann Schritt für Schritt abgesichert wird.
+
 ## Erworbene Fähigkeiten
 
 ## Verwendete Werkzeuge
+- Terraform (Infrastructure as Code)
+- AWS: VPC, S3, IAM, KMS, CloudTrail, VPC Flow Logs
+- Verschlüsselung: AWS KMS (verwalteter Schlüssel mit automatischer Rotation)
 
 ## Schritte
 
-Dieses Projekt zeigt, wie sich häufige Sicherheitskonfigurationsfehler bei S3-Buckets und im umgebenden AWS-Umfeld erkennen und anschließend mit Terraform reproduzierbar beheben lassen. Der Ansatz folgt einer Vorher-Nachher-Logik: Zunächst wird eine unsichere Konfiguration bereitgestellt, die dann Schritt für Schritt abgesichert wird.
+
 
 [⬆️ Zurück zum Menü](#nom-du-projet)
