@@ -44,11 +44,10 @@ Enhanced knowledge of network protocols and security vulnerabilities.
 Development of critical thinking and problem-solving skills in cybersecurity.
 
 ## Tools Used
-[Bullet Points - Remove this afterwards]
 
-Security Information and Event Management (SIEM) system for log ingestion and analysis.
-Network analysis tools (such as Wireshark) for capturing and examining network traffic.
-Telemetry generation tools to create realistic network traffic and attack scenarios.
+- Terraform (Infrastructure as Code)
+- AWS: VPC, S3, IAM, KMS, CloudTrail, VPC Flow Logs
+- Encryption: AWS KMS (managed key, with automatic rotation)
 
 ## Steps
 
