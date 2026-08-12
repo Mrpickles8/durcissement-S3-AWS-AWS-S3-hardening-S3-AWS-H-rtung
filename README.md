@@ -15,6 +15,12 @@ Objectif
 
 Ce projet démontre la capacité à repérer des mauvaises configurations de sécurité courantes sur les buckets S3 et ce qui les entoures AWS, puis à les corriger de façon reproductible avec Terraform. La démarche suit une logique avant / après : on déploie d'abord une configuration non sécurisée, puis on la durcit contrôle par contrôle.
 
+
+Compétences acquises
+
+Outils utilisés
+
+Étapes
 [⬆️ Retour au menu](#nom-du-projet)
 
 ---
@@ -52,6 +58,12 @@ Example below.
 ## Deutsch
 
 Ziel
+
+Erworbene Fähigkeiten
+
+Verwendete Werkzeuge
+
+Schritte
 
 Dieses Projekt zeigt, wie sich häufige Sicherheitskonfigurationsfehler bei S3-Buckets und im umgebenden AWS-Umfeld erkennen und anschließend mit Terraform reproduzierbar beheben lassen. Der Ansatz folgt einer Vorher-Nachher-Logik: Zunächst wird eine unsichere Konfiguration bereitgestellt, die dann Schritt für Schritt abgesichert wird.
 
