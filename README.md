@@ -95,7 +95,7 @@ Ref 4 : État « après » — pare-feu resserré
 Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
 ```hcl
 code:
-#ici in crée le VPC puis on le segment en sous réseau.
+#ici on crée le VPC puis on le segment en sous réseau.
 resource "aws_vpc" "principal" {
   cidr_block = "10.0.0.0/16"
   tags       = { Name = "vpc-projet-a" }
@@ -155,7 +155,7 @@ code:
 data "aws_caller_identity" "moi" {}
 
 # --- Bucket de logs ---
-#Ici nous allons créer un nouveau bucket pour stocker les logs en créant une policy pour que CloudTrail puisse avoir access et utiliser ces logs via les deux actions "s3:GetBucketAcl" et "s3:PutObject". 
+#Ici nous allons créer un nouveau bucket pour stocker les logs en créant une policy pour que CloudTrail puisse avoir accèss et utiliser ces logs via les deux actions "s3:GetBucketAcl" et "s3:PutObject". 
 resource "aws_s3_bucket" "logs" {
   bucket = "projet-a-logs-CHANGE-MOI-12345"
 }
@@ -196,7 +196,7 @@ Ref 7 : Surveillance réseau — VPC Flow Logs
 Les VPC Flow Logs capturent le trafic réseau du VPC, complétant la visibilité offerte par CloudTrail.
 ```hcl
 # --- VPC Flow Logs ---
-#Ici nous avons la suite du code précédent pour activer Le tracker de fluxs de AWS a travers le vpc.
+#Ici nous avons la suite du code précédent pour activer Le traqueur de fluxs de AWS a travers le vpc.
 resource "aws_flow_log" "vpc" {
   vpc_id               = aws_vpc.principal.id
   traffic_type         = "ALL"
