@@ -30,13 +30,7 @@ Ce projet démontre la capacité à repérer des mauvaises configurations de sé
 - Chiffrement : AWS KMS (clé gérée, avec rotation automatique)
 ## Étapes
 
-Ref 1 : Diagramme d'architecture
-
-Vue d'ensemble de l'infrastructure durcie : réseau, stockage chiffré, gestion des accès et surveillance.
-
-Afficher l'image
-
-Ref 2 : État « avant » — stockage S3 non protégé
+Ref 1 : État « avant » — stockage S3 non protégé
 
 Le bucket initial, sans blocage d'accès public ni chiffrement configuré. C'est la situation vulnérable de départ.
 ```hcl
@@ -47,7 +41,7 @@ resource "aws_s3_bucket" "faible" {
 ```
 ![Bucket S3 sans chiffrement](images/C4.png)
 
-Ref 3 : État « avant » — pare-feu ouvert à tout internet
+Ref 2 : État « avant » — pare-feu ouvert à tout internet
 
 Le security group autorise l'ensemble du trafic entrant depuis 0.0.0.0/0, sur tous les ports. Configuration à corriger en priorité.
 
@@ -67,7 +61,7 @@ resource "aws_security_group" "faible" {
 
 ![Bucket S3 sans chiffrement](images/C5.png)
 
-Ref 4 : État « après » — blocage de l'accès public S3
+Ref 3 : État « après » — blocage de l'accès public S3
 ```hcl
 Le même bucket, avec « Block public access » activé et le chiffrement au repos via une clé KMS gérée.
 resource "aws_s3_bucket" "securise" {
@@ -96,7 +90,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
 ```
 ![Bucket S3 sans chiffrement](images/C6r.png)
 ![Bucket S3 sans chiffrement](images/C7.png)
-Ref 5 : État « après » — pare-feu resserré
+Ref 4 : État « après » — pare-feu resserré
 
 Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
 ```hcl
@@ -136,7 +130,7 @@ resource "aws_security_group" "securise" {
 
 ![Bucket S3 sans chiffrement](images/C9r.png)
 
-Ref 6 : Chiffrement — clé KMS avec rotation
+Ref 5 : Chiffrement — clé KMS avec rotation
 
 Clé KMS gérée par le client, rotation automatique activée, utilisée pour chiffrer le stockage.
 ```hcl
@@ -153,7 +147,7 @@ resource "aws_kms_alias" "principale" {
 }
 ```
 ![Bucket S3 sans chiffrement](images/jsp%202r.png)
-Ref 7 : Traçabilité — CloudTrail actif
+Ref 6 : Traçabilité — CloudTrail actif
 
 CloudTrail configuré en multi-région avec validation de l'intégrité des journaux : chaque action sur le compte est enregistrée.
 ```hcl
@@ -197,13 +191,22 @@ resource "aws_cloudtrail" "principal" {
 ```
 ![Bucket S3 sans chiffrement](images/C10r.png)
 
-Ref 8 : Surveillance réseau — VPC Flow Logs
+Ref 7 : Surveillance réseau — VPC Flow Logs
 
 Les VPC Flow Logs capturent le trafic réseau du VPC, complétant la visibilité offerte par CloudTrail.
+```hcl
+# --- VPC Flow Logs ---
+#Ici nous avons la suite du code précédent pour activer Le tracker de fluxs de AWS a travers le vpc.
+resource "aws_flow_log" "vpc" {
+  vpc_id               = aws_vpc.principal.id
+  traffic_type         = "ALL"
+  log_destination      = aws_s3_bucket.logs.arn
+  log_destination_type = "s3"
+}
+```
+![Bucket S3 sans chiffrement](images/C11.png)
 
-Afficher l'image
-
-Note
+## Note
 
 GuardDuty n'a pas été inclus dans cette version : son activation nécessite une éligibilité de compte qui n'était pas disponible au moment de la réalisation. La détection repose ici sur CloudTrail et les VPC Flow Logs. Le projet est un exercice de durcissement, et non une architecture de production (ni haute disponibilité, ni gestion multi-comptes).
 
