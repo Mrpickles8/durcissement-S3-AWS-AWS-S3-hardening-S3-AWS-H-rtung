@@ -133,7 +133,8 @@ resource "aws_security_group" "securise" {
   }
 }
 ```
-Afficher l'image
+
+![Bucket S3 sans chiffrement](images/C9r.png)
 
 Ref 6 : Chiffrement — clé KMS avec rotation
 
