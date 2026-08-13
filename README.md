@@ -441,18 +441,217 @@ Example below.
 ## Deutsch
 
 ## Ziel
-
-Dieses Projekt zeigt, wie sich häufige Sicherheitskonfigurationsfehler bei S3-Buckets und im umgebenden AWS-Umfeld erkennen und anschließend mit Terraform reproduzierbar beheben lassen. Der Ansatz folgt einer Vorher-Nachher-Logik: Zunächst wird eine unsichere Konfiguration bereitgestellt, die dann Schritt für Schritt abgesichert wird.
-
-## Erworbene Fähigkeiten
-
+ 
+Dieses Projekt zeigt die Fähigkeit, gängige Sicherheits-Fehlkonfigurationen bei S3-Buckets und den zugehörigen AWS-Ressourcen zu erkennen und sie reproduzierbar mit Terraform zu beheben. Der Ansatz folgt einer Vorher-/Nachher-Logik: Zunächst wird eine unsichere Konfiguration bereitgestellt, anschließend wird sie Kontrolle für Kontrolle gehärtet.
+ 
+## Erworbene Kompetenzen
+ 
+- Praktische Beherrschung von Terraform und des Infrastructure-as-Code-Ansatzes.
+- Vertieftes Verständnis der Härtung von AWS-Diensten (S3, IAM, KMS, VPC).
+- Anwendung des Least-Privilege-Prinzips beim Entwurf von IAM-Rollen.
+- Einrichtung von Nachvollziehbarkeit und Überwachung (CloudTrail, VPC Flow Logs).
+- Entwicklung einer „Verteidiger"-Denkweise: eine Fehlkonfiguration erkennen und beheben.
 ## Verwendete Werkzeuge
+ 
 - Terraform (Infrastructure as Code)
 - AWS: VPC, S3, IAM, KMS, CloudTrail, VPC Flow Logs
-- Verschlüsselung: AWS KMS (verwalteter Schlüssel mit automatischer Rotation)
-
+- Verschlüsselung: AWS KMS (verwalteter Schlüssel, mit automatischer Rotation)
 ## Schritte
-
-
-
+ 
+Ref 1: Zustand „vorher" | ungeschützter S3-Speicher
+ 
+Der ursprüngliche Bucket, ohne Blockierung des öffentlichen Zugriffs und ohne konfigurierte Verschlüsselung. Das ist der verwundbare Ausgangspunkt.
+ 
+```hcl
+resource "aws_s3_bucket" "faible" {
+  bucket = "projet-a-bucket-faible-potaufeu"
+}
+```
+ 
+![Ungeschützter S3-Bucket, keine Blockierung des öffentlichen Zugriffs](images/C4.png)
+ 
+Ref 2: Zustand „vorher" | Firewall für das gesamte Internet geöffnet
+ 
+Die Security Group erlaubt den gesamten eingehenden Datenverkehr von 0.0.0.0/0, auf allen Ports. Eine Konfiguration, die vorrangig zu beheben ist.
+ 
+```hcl
+resource "aws_security_group" "faible" {
+  name        = "sg-trop-ouvert"
+  description = "Volontairement non securise"
+ 
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+ 
+![Für das gesamte Internet auf allen Ports geöffnete Security Group](images/C5.png)
+ 
+Ref 3: Zustand „nachher" | Blockierung des öffentlichen Zugriffs auf S3
+ 
+Derselbe Bucket, mit aktiviertem „Block public access" und Verschlüsselung im Ruhezustand über einen verwalteten KMS-Schlüssel.
+ 
+```hcl
+resource "aws_s3_bucket" "securise" {
+  bucket = "projet-a-bucket-securise-potaufeu-plus-sur"
+}
+ 
+# Zunächst blockieren wir JEDEN öffentlichen Zugriff
+resource "aws_s3_bucket_public_access_block" "securise" {
+  bucket                  = aws_s3_bucket.securise.id
+  block_public_acls       = true
+  block_public_policy      = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+ 
+# Anschließend verschlüsseln wir mit unserem KMS-Schlüssel
+resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
+  bucket = aws_s3_bucket.securise.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.principale.arn
+    }
+  }
+}
+```
+ 
+![Blockierung des öffentlichen Zugriffs auf dem gesicherten Bucket aktiviert](images/C6r.png)
+![KMS-Verschlüsselung auf dem gesicherten Bucket aktiviert](images/C7.png)
+ 
+Ref 4: Zustand „nachher" | verschärfte Firewall
+ 
+Die gehärtete Security Group: Der Wechsel von „weit offen für das gesamte Internet" zu einer einzigen SSH-Verbindung, die von einer einzigen IP-Adresse erlaubt ist, nach dem Prinzip des geringsten Zugriffs.
+ 
+```hcl
+# Hier erstellen wir die VPC und segmentieren sie in ein Subnetz.
+resource "aws_vpc" "principal" {
+  cidr_block = "10.0.0.0/16"
+  tags       = { Name = "vpc-projet-a" }
+}
+ 
+resource "aws_subnet" "prive" {
+  vpc_id     = aws_vpc.principal.id
+  cidr_block = "10.0.1.0/24"
+  tags       = { Name = "subnet-prive" }
+}
+ 
+# Dann härten wir die Security Group / Firewall, indem wir nur eine SSH-Verbindung von einer bestimmten IP zulassen
+resource "aws_security_group" "securise" {
+  name   = "sg-durci"
+  vpc_id = aws_vpc.principal.id
+ 
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["203.0.113.10/32"]
+  }
+ 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+ 
+![Gehärtete Security Group: SSH von einer einzigen IP erlaubt](images/C9r.png)
+ 
+Ref 5: Verschlüsselung | KMS-Schlüssel mit Rotation
+ 
+Vom Kunden verwalteter KMS-Schlüssel, automatische Rotation aktiviert, verwendet zur Verschlüsselung des Speichers.
+ 
+```hcl
+resource "aws_kms_key" "principale" {
+  description             = "Cle de chiffrement projet A"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
+ 
+resource "aws_kms_alias" "principale" {
+  name          = "alias/projet-a"
+  target_key_id = aws_kms_key.principale.key_id
+}
+```
+ 
+![KMS-Schlüssel mit aktivierter automatischer Rotation](images/jsp%202r.png)
+ 
+Ref 6: Nachvollziehbarkeit | CloudTrail aktiv
+ 
+CloudTrail als multiregional konfiguriert, mit Validierung der Integrität der Protokolldateien: Jede Aktion auf dem Konto wird aufgezeichnet.
+ 
+```hcl
+data "aws_caller_identity" "moi" {}
+ 
+# --- Log-Bucket ---
+# Hier erstellen wir einen neuen Bucket zum Speichern der Logs und fügen eine Policy hinzu,
+# damit CloudTrail über die beiden Aktionen "s3:GetBucketAcl" und "s3:PutObject" auf diese
+# Logs zugreifen und sie nutzen kann.
+resource "aws_s3_bucket" "logs" {
+  bucket = "projet-a-logs-CHANGE-MOI-12345"
+}
+ 
+resource "aws_s3_bucket_public_access_block" "logs" {
+  bucket                  = aws_s3_bucket.logs.id
+  block_public_acls       = true
+  block_public_policy      = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+ 
+resource "aws_s3_bucket_policy" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Principal = { Service = "cloudtrail.amazonaws.com" },
+        Action = "s3:GetBucketAcl", Resource = aws_s3_bucket.logs.arn },
+      { Effect = "Allow", Principal = { Service = "cloudtrail.amazonaws.com" },
+        Action = "s3:PutObject",
+        Resource = "${aws_s3_bucket.logs.arn}/AWSLogs/${data.aws_caller_identity.moi.account_id}/*" }
+    ]
+  })
+}
+ 
+# --- CloudTrail ---
+# Nun konfigurieren wir CloudTrail so, dass es multiregional ist und die Logs vor der
+# Analyse validiert werden.
+resource "aws_cloudtrail" "principal" {
+  name                       = "projet-a-trail"
+  s3_bucket_name             = aws_s3_bucket.logs.id
+  is_multi_region_trail      = true
+  enable_log_file_validation = true
+  depends_on                 = [aws_s3_bucket_policy.logs]
+}
+```
+ 
+![CloudTrail aktiv, multiregional, mit Log-Validierung](images/C10r.png)
+ 
+Ref 7: Netzwerküberwachung | VPC Flow Logs
+ 
+Die VPC Flow Logs erfassen den Netzwerkverkehr der VPC und ergänzen die von CloudTrail gebotene Sichtbarkeit.
+ 
+```hcl
+# --- VPC Flow Logs ---
+# Hier folgt die Fortsetzung des vorherigen Codes, um die Verkehrsverfolgung von AWS
+# über die VPC zu aktivieren.
+resource "aws_flow_log" "vpc" {
+  vpc_id               = aws_vpc.principal.id
+  traffic_type         = "ALL"
+  log_destination      = aws_s3_bucket.logs.arn
+  log_destination_type = "s3"
+}
+```
+ 
+![VPC Flow Logs auf der VPC aktiviert](images/C11.png)
+ 
+## Hinweis
+ 
+GuardDuty wurde in dieser Version nicht aufgenommen: Die Aktivierung erfordert eine Konto-Berechtigung, die zum Zeitpunkt der Umsetzung nicht verfügbar war. Die Erkennung stützt sich hier auf CloudTrail und die VPC Flow Logs. Dieses Projekt ist eine Härtungsübung und keine Produktionsarchitektur (keine Hochverfügbarkeit, keine Multi-Konto-Verwaltung).
 [⬆️ Zurück zum Menü](#nom-du-projet)
