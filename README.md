@@ -34,7 +34,12 @@ Ref 2 : État « avant » — stockage S3 non protégé
 
 Le bucket initial, sans blocage d'accès public ni chiffrement configuré. C'est la situation vulnérable de départ.
 
-Afficher l'image
+code :
+resource "aws_s3_bucket" "faible" {
+  bucket = "projet-a-bucket-faible-potaufeu"
+}
+
+![Bucket S3 sans chiffrement](images/C4.png)
 
 Ref 3 : État « avant » — pare-feu ouvert à tout internet
 
