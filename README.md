@@ -45,7 +45,21 @@ Ref 3 : État « avant » — pare-feu ouvert à tout internet
 
 Le security group autorise l'ensemble du trafic entrant depuis 0.0.0.0/0, sur tous les ports. Configuration à corriger en priorité.
 
-Afficher l'image
+```hcl
+resource "aws_security_group" "faible" {
+  name        = "sg-trop-ouvert"
+  description = "Volontairement non securise"
+
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+![Bucket S3 sans chiffrement](images/C5.png)
 
 Ref 4 : État « après » — blocage de l'accès public S3
 
