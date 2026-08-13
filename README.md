@@ -71,7 +71,7 @@ Ref 4 : État « après » — blocage de l'accès public S3
 ```hcl
 Le même bucket, avec « Block public access » activé et le chiffrement au repos via une clé KMS gérée.
 resource "aws_s3_bucket" "securise" {
-  bucket = "projet-a-bucket-securise-CHANGE-MOI-12345"
+  bucket = "projet-a-bucket-securise-potaufeu-plus-sur"
 }
 
 # Dans un premier temps on bloque TOUT accès public
@@ -99,7 +99,40 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
 Ref 5 : État « après » — pare-feu resserré
 
 Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
+```hcl
+code:
+#ici in crée le VPC puis on le segment en sous réseau.
+resource "aws_vpc" "principal" {
+  cidr_block = "10.0.0.0/16"
+  tags       = { Name = "vpc-projet-a" }
+}
 
+resource "aws_subnet" "prive" {
+  vpc_id     = aws_vpc.principal.id
+  cidr_block = "10.0.1.0/24"
+  tags       = { Name = "subnet-prive" }
+}
+
+# Puis on endurcie le groupe de sécurité\Pare-feu en laissant uniquement une connexion SSH depuis une certaine IP
+resource "aws_security_group" "securise" {
+  name   = "sg-durci"
+  vpc_id = aws_vpc.principal.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["203.0.113.10/32"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
 Afficher l'image
 
 Ref 6 : Chiffrement — clé KMS avec rotation
