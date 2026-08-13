@@ -1,4 +1,4 @@
-# durcissement-S3-AWS-AWS-S3-hardening-S3-AWS-H-rtung
+# aws-s3-hardening-terraform
 AWS project to harden a S3 bucket
 
 > 🌍 **Select your language / Choisissez votre langue**
