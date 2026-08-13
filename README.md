@@ -18,6 +18,12 @@ Ce projet démontre la capacité à repérer des mauvaises configurations de sé
 
 ## Compétences acquises
 
+- Maîtrise pratique de Terraform et de l'approche Infrastructure as Code.
+- Compréhension approfondie du durcissement des services AWS (S3, IAM, KMS, VPC).
+- Application du principe du moindre privilège dans la conception des rôles IAM.
+- Mise en place de la traçabilité et de la surveillance (CloudTrail, VPC Flow Logs).
+- Développement d'un réflexe « défenseur » : repérer une mauvaise configuration et la corriger.
+
 ## Outils utilisés
 - Terraform (Infrastructure as Code)
 - AWS : VPC, S3, IAM, KMS, CloudTrail, VPC Flow Logs
