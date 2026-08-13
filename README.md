@@ -68,9 +68,32 @@ resource "aws_security_group" "faible" {
 ![Bucket S3 sans chiffrement](images/C5.png)
 
 Ref 4 : État « après » — blocage de l'accès public S3
-
+```hcl
 Le même bucket, avec « Block public access » activé et le chiffrement au repos via une clé KMS gérée.
+resource "aws_s3_bucket" "securise" {
+  bucket = "projet-a-bucket-securise-CHANGE-MOI-12345"
+}
 
+# Dans un premier temps on bloque TOUT accès public
+resource "aws_s3_bucket_public_access_block" "securise" {
+  bucket                  = aws_s3_bucket.securise.id
+  block_public_acls       = true
+  block_public_policy      = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Ensuite on va chiffrer avec notre clé KMS
+resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
+  bucket = aws_s3_bucket.securise.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.principale.arn
+    }
+  }
+}
+```
 Afficher l'image
 
 Ref 5 : État « après » — pare-feu resserré
