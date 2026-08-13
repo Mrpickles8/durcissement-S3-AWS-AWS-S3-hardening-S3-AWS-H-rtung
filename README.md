@@ -24,6 +24,58 @@ Ce projet démontre la capacité à repérer des mauvaises configurations de sé
 - Chiffrement : AWS KMS (clé gérée, avec rotation automatique)
 ## Étapes
 
+Ref 1 : Diagramme d'architecture
+
+Vue d'ensemble de l'infrastructure durcie : réseau, stockage chiffré, gestion des accès et surveillance.
+
+Afficher l'image
+
+Ref 2 : État « avant » — stockage S3 non protégé
+
+Le bucket initial, sans blocage d'accès public ni chiffrement configuré. C'est la situation vulnérable de départ.
+
+Afficher l'image
+
+Ref 3 : État « avant » — pare-feu ouvert à tout internet
+
+Le security group autorise l'ensemble du trafic entrant depuis 0.0.0.0/0, sur tous les ports. Configuration à corriger en priorité.
+
+Afficher l'image
+
+Ref 4 : État « après » — blocage de l'accès public S3
+
+Le même bucket, avec « Block public access » activé et le chiffrement au repos via une clé KMS gérée.
+
+Afficher l'image
+
+Ref 5 : État « après » — pare-feu resserré
+
+Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
+
+Afficher l'image
+
+Ref 6 : Chiffrement — clé KMS avec rotation
+
+Clé KMS gérée par le client, rotation automatique activée, utilisée pour chiffrer le stockage.
+
+Afficher l'image
+
+Ref 7 : Traçabilité — CloudTrail actif
+
+CloudTrail configuré en multi-région avec validation de l'intégrité des journaux : chaque action sur le compte est enregistrée.
+
+Afficher l'image
+
+Ref 8 : Surveillance réseau — VPC Flow Logs
+
+Les VPC Flow Logs capturent le trafic réseau du VPC, complétant la visibilité offerte par CloudTrail.
+
+Afficher l'image
+
+Note
+
+GuardDuty n'a pas été inclus dans cette version : son activation nécessite une éligibilité de compte qui n'était pas disponible au moment de la réalisation. La détection repose ici sur CloudTrail et les VPC Flow Logs. Le projet est un exercice de durcissement, et non une architecture de production (ni haute disponibilité, ni gestion multi-comptes).
+
 [⬆️ Retour au menu](#nom-du-projet)
 
 ---
