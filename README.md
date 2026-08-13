@@ -94,8 +94,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
   }
 }
 ```
-Afficher l'image
-
+![Bucket S3 sans chiffrement](images/C6r.png)
+![Bucket S3 sans chiffrement](images/C7.png)
 Ref 5 : État « après » — pare-feu resserré
 
 Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
