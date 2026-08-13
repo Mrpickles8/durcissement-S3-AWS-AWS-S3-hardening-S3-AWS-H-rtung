@@ -139,14 +139,63 @@ resource "aws_security_group" "securise" {
 Ref 6 : Chiffrement — clé KMS avec rotation
 
 Clé KMS gérée par le client, rotation automatique activée, utilisée pour chiffrer le stockage.
+```hcl
+code:
+resource "aws_kms_key" "principale" {
+  description             = "Cle de chiffrement projet A"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
 
-Afficher l'image
-
+resource "aws_kms_alias" "principale" {
+  name          = "alias/projet-a"
+  target_key_id = aws_kms_key.principale.key_id
+}
+```
+![Bucket S3 sans chiffrement](images/jsp%202r.png)
 Ref 7 : Traçabilité — CloudTrail actif
 
 CloudTrail configuré en multi-région avec validation de l'intégrité des journaux : chaque action sur le compte est enregistrée.
+```hcl
+code:
+data "aws_caller_identity" "moi" {}
 
-Afficher l'image
+# --- Bucket de logs ---
+#Ici nous allons créer un nouveau bucket pour stocker les logs en créant une policy pour que CloudTrail puisse avoir access et utiliser ces logs via les deux actions "s3:GetBucketAcl" et "s3:PutObject". 
+resource "aws_s3_bucket" "logs" {
+  bucket = "projet-a-logs-CHANGE-MOI-12345"
+}
+resource "aws_s3_bucket_public_access_block" "logs" {
+  bucket                  = aws_s3_bucket.logs.id
+  block_public_acls       = true
+  block_public_policy      = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+resource "aws_s3_bucket_policy" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      { Effect = "Allow", Principal = { Service = "cloudtrail.amazonaws.com" },
+        Action = "s3:GetBucketAcl", Resource = aws_s3_bucket.logs.arn },
+      { Effect = "Allow", Principal = { Service = "cloudtrail.amazonaws.com" },
+        Action = "s3:PutObject",
+        Resource = "${aws_s3_bucket.logs.arn}/AWSLogs/${data.aws_caller_identity.moi.account_id}/*" }
+    ]
+  })
+}
+
+# --- CloudTrail ---
+#Maintenant nous configurons CloudTrail pour qu'il soit multi-régionnal et qu'Il y ait une validation des logs avant analyse.
+resource "aws_cloudtrail" "principal" {
+  name                       = "projet-a-trail"
+  s3_bucket_name             = aws_s3_bucket.logs.id
+  is_multi_region_trail      = true
+  enable_log_file_validation = true
+  depends_on                 = [aws_s3_bucket_policy.logs]
+```
+![Bucket S3 sans chiffrement](images/C10r.png)
 
 Ref 8 : Surveillance réseau — VPC Flow Logs
 
