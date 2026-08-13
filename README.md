@@ -62,8 +62,10 @@ resource "aws_security_group" "faible" {
 ![Bucket S3 sans chiffrement](images/C5.png)
 
 Ref 3 : État « après » — blocage de l'accès public S3
-```hcl
+
 Le même bucket, avec « Block public access » activé et le chiffrement au repos via une clé KMS gérée.
+
+```hcl
 resource "aws_s3_bucket" "securise" {
   bucket = "projet-a-bucket-securise-potaufeu-plus-sur"
 }
@@ -92,7 +94,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "securise" {
 ![Bucket S3 sans chiffrement](images/C7.png)
 Ref 4 : État « après » — pare-feu resserré
 
-Le security group durci : accès limité à un seul port et une seule adresse IP source, selon le principe du moindre accès.
+Le security group durci : on passe de « tout ouvert à tout internet » à une seule connexion SSH autorisée depuis une seule adresse IP, selon le principe du moindre accès.
 ```hcl
 code:
 #ici on crée le VPC puis on le segment en sous réseau.
@@ -188,6 +190,7 @@ resource "aws_cloudtrail" "principal" {
   is_multi_region_trail      = true
   enable_log_file_validation = true
   depends_on                 = [aws_s3_bucket_policy.logs]
+}
 ```
 ![Bucket S3 sans chiffrement](images/C10r.png)
 
